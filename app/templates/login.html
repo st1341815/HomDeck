@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}登录 · {{ site_name }}{% endblock %}
+
+{% block body %}
+<div class="auth-wrap">
+  <form class="auth-card" id="login-form" autocomplete="on">
+    <div class="auth-brand"><span class="brand-icon">{{ site_icon }}</span> {{ site_name }}</div>
+    <label class="field">
+      <span>用户名</span>
+      <input name="username" type="text" required autofocus autocomplete="username">
+    </label>
+    <label class="field">
+      <span>密码</span>
+      <input name="password" type="password" required autocomplete="current-password">
+    </label>
+    <p class="err" id="err" hidden></p>
+    <button class="btn primary block" type="submit" id="submit">登录</button>
+    <a class="link center" href="/">← 返回面板</a>
+  </form>
+</div>
+<script src="/static/js/login.js?v={{ version }}" defer></script>
+{% endblock %}

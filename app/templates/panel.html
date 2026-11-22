@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ data.site.name }}{% endblock %}
+{% block bodyclass %}on-stage{% endblock %}
+
+{% block body %}
+<div class="stage">
+  <div class="stage-wall" aria-hidden="true"></div>
+  <div class="stage-mask" aria-hidden="true"></div>
+
+  <div class="dock">
+    {% if not data.is_lan %}
+    <span class="dock-wan" title="当前经外网访问，内网地址可能打不开">WAN</span>
+    {% endif %}
+    {% if user %}
+    <a class="dock-btn" href="/admin">管理</a>
+    {% else %}
+    <a class="dock-btn" href="/login">登录</a>
+    {% endif %}
+  </div>
+
+  <header class="hero">
+    <div class="hero-line">
+      <h1 class="hero-title">
+        {% if data.site.icon %}<span class="hero-mark" aria-hidden="true">{{ data.site.icon }}</span>{% endif %}
+        <span>{{ data.site.name }}</span>
+      </h1>
+      <span class="hero-sep" aria-hidden="true">|</span>
+      <time class="hero-clock" id="clock">--:--</time>
+    </div>
+    <div class="hero-search">
+      <div class="engine-wrap">
+        <button class="engine" id="engine-btn" type="button"
+                aria-haspopup="listbox" aria-expanded="false" aria-controls="engine-menu"
+                title="切换搜索范围（本站 / 百度 / 谷歌）">
+          <span id="engine-name">本站</span>
+          <span class="engine-caret" aria-hidden="true">▾</span>
+        </button>
+        <ul class="engine-menu" id="engine-menu" role="listbox" aria-label="搜索引擎" hidden></ul>
+      </div>
+      <input id="search" class="search" type="search" placeholder="搜索本站服务" autocomplete="off" spellcheck="false" aria-label="搜索">
+      <span class="search-count" id="search-count" hidden></span>
+    </div>
+  </header>
+
+  <main class="wrap" id="panel">
+    {% for g in data.groups %}
+    <section class="group" data-group-name="{{ g.name }}">
+      <h2 class="group-title">
+        <span class="group-no">{{ '%02d'|format(loop.index) }}</span>
+        <span class="group-mark" aria-hidden="true"></span>
+        {% if g.icon %}<span class="group-icon">{{ g.icon }}</span>{% endif %}
+        <span class="group-text">{{ g.name }}</span>
+        <span class="count">{{ g['items']|length }}</span>
+      </h2>
+      <div class="grid">
+        {% for it in g['items'] %}
+        <a class="card" href="{{ it.url }}" target="{{ it.target }}" rel="noopener noreferrer"
+           data-name="{{ it.name }}" data-desc="{{ it.description }}"
+           title="{{ it.name }}{% if it.description %} · {{ it.description }}{% endif %}">
+          <span class="card-icon{% if not it.icon %} is-text{% endif %}">
+            {% if it.icon.startswith('/') %}
+            <img src="{{ it.icon }}" alt="" loading="lazy" decoding="async">
+            {% elif it.icon %}
+            {{ it.icon }}
+            {% else %}
+            {{ it.initial }}
+            {% endif %}
+          </span>
+          <span class="card-name">{{ it.name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% else %}
+    <div class="empty">
+      <span class="empty-key" aria-hidden="true">+</span>
+      <p class="empty-title">面板还是空的</p>
+      <p class="dim">先去 <a class="link-a" href="/login">登录</a>，进管理后台添加分组和卡片。</p>
+    </div>
+    {% endfor %}
+    <div class="empty" id="no-hit" hidden>
+      <p class="empty-title">没有匹配的服务</p>
+      <p class="dim">换个关键词，或按 <kbd>Esc</kbd> 清空。</p>
+    </div>
+  </main>
+
+  {% if data.site.footer %}
+  <footer class="foot">{{ data.site.footer }}</footer>
+  {% endif %}
+</div>
+
+<script src="/static/js/panel.js?v={{ version }}" defer></script>
+{% endblock %}

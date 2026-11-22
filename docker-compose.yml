@@ -1,0 +1,19 @@
+services:
+  homedeck:
+    build: .
+    image: homedeck:local
+    container_name: homedeck
+    restart: unless-stopped
+    ports:
+      - "3302:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      HOMEDECK_DATA: /data
+      HOMEDECK_ADMIN_USER: ${HOMEDECK_ADMIN_USER:-admin}
+      HOMEDECK_ADMIN_PASSWORD: ${HOMEDECK_ADMIN_PASSWORD:-}
+      HOMEDECK_TRUST_PROXY: ${HOMEDECK_TRUST_PROXY:-0}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
