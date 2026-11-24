@@ -290,21 +290,26 @@
 
   /* ---------- 头部时钟（参考 Sun-Panel 的首页时钟） ---------- */
 
+  let clockTimer = 0;
+
   function tickClock() {
     if (!clockEl) return;
     const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const next = hh + ':' + mm;
+    const pad = (n) => String(n).padStart(2, '0');
+    const next = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
     if (clockEl.textContent !== next) clockEl.textContent = next;
     clockEl.dateTime = now.toISOString();
     clockEl.title = now.toLocaleDateString('zh-CN', {
       year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
     });
+    // 对齐到下一个整秒再跑，而不是死等 1000ms：固定间隔会累积漂移，
+    // 表现为偶尔跳一秒或同一秒停两拍。用余数反算延迟，秒数永远踩在整秒边界
+    // （标签页在后台被节流后恢复也能立刻对上当前秒）。
+    clearTimeout(clockTimer);
+    clockTimer = setTimeout(tickClock, 1000 - (Date.now() % 1000));
   }
 
   tickClock();
-  setInterval(tickClock, 5000);
 
   /* ---------- 启动 ---------- */
 
