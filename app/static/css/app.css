@@ -1193,7 +1193,9 @@ mark {
 
 .icon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  /* 固定每行 8 个；minmax(0,1fr) 是关键——普通 1fr 的隐式 min-width:auto
+     会被 nowrap 的长图标名顶宽，导致列数塌陷 */
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
@@ -1207,7 +1209,7 @@ mark {
   align-items: center;
   gap: var(--sp-1);
 }
-.icon-cell img { width: 36px; height: 36px; object-fit: contain; }
+.icon-cell img { width: 48px; height: 48px; object-fit: contain; }
 .icon-cell .nm {
   font: 400 10px/1.4 var(--mono);
   color: var(--fg-faint);
@@ -1296,6 +1298,8 @@ mark {
   .form-grid { grid-template-columns: 1fr; }
   .search { width: 150px; }
   .search:focus { width: 180px; }
+  /* 手机上一行 8 个会挤成一撮，退回自适应 */
+  .icon-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
 }
 
 @media (max-width: 560px) {
