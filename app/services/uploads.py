@@ -87,6 +87,18 @@ def delete_icon(icon_id: int) -> None:
         pass
 
 
+def rename_icon(icon_id: int, name: str) -> dict:
+    """给图标起个人名。空白折叠成单空格，最长 80 字。"""
+    clean = " ".join((name or "").split())[:80]
+    if not clean:
+        raise UploadError("名字不能为空")
+    row = db.one("SELECT * FROM icon WHERE id=?", (icon_id,))
+    if not row:
+        raise UploadError("图标不存在")
+    db.run("UPDATE icon SET name=? WHERE id=?", (clean, icon_id))
+    return {"id": icon_id, "name": clean, "old": row["name"]}
+
+
 def _merge_into(keep: dict, dup: dict) -> None:
     """把 dup 合并进 keep：卡片引用改过去，多余的记录和文件删掉。"""
     db.run(
@@ -137,9 +149,10 @@ def dedupe_icons() -> dict:
 
 
 def list_icons() -> list[dict]:
+    """用得多的排前面——清理时一眼看出哪些是没人用的孤儿图标。"""
     rows = db.all_rows(
         "SELECT i.*, (SELECT COUNT(*) FROM item WHERE item.icon = '/i/' || i.path) AS used"
-        " FROM icon i ORDER BY i.id DESC"
+        " FROM icon i ORDER BY used DESC, i.id DESC"
     )
     return [
         {

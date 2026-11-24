@@ -10,7 +10,7 @@ ICON_DIR = DATA_DIR / "icons"
 DB_PATH = DATA_DIR / "app.db"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
-VERSION = "0.8.0"
+VERSION = "0.8.1"
 
 # 会话签名密钥：优先环境变量，其次持久化到 data/secret.key
 SECRET_KEY = os.environ.get("HOMEDECK_SECRET", "")

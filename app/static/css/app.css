@@ -1215,12 +1215,31 @@ mark {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+}
+.icon-cell .nm:hover {
+  color: var(--fg);
+  border-bottom-color: var(--line);
+}
+.icon-cell input.rename {
+  width: 100%;
+  min-width: 0;
+  font: 400 10px/1.4 var(--mono);
+  text-align: center;
+  padding: 1px 4px;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  outline: none;
 }
 .icon-cell .used {
   font: 400 10px/1.3 var(--mono);
   color: var(--fg-faint);
   white-space: nowrap;
 }
+.icon-cell .used.empty { opacity: .45; }
 .icon-cell .ops { display: flex; gap: 4px; }
 
 .tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-2); }

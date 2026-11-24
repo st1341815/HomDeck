@@ -242,6 +242,21 @@ async def upload_icon(request: Request, file: UploadFile = File(...)):
     }
 
 
+@router.patch("/api/admin/icons/{icon_id}")
+async def rename_icon(icon_id: int, request: Request):
+    user = _guard(request, "write")
+    body = await request.json()
+    try:
+        res = upload_svc.rename_icon(icon_id, body.get("name") or "")
+    except upload_svc.UploadError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
+    db.audit(
+        user["id"], "icon.rename",
+        f"#{icon_id} {res['old']} → {res['name']}", security.client_ip(request), "",
+    )
+    return {"ok": True, "name": res["name"]}
+
+
 @router.delete("/api/admin/icons/{icon_id}")
 def delete_icon(icon_id: int, request: Request):
     _guard(request, "write")

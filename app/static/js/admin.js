@@ -412,8 +412,12 @@
       img.src = ic.url;
       img.alt = ic.name;
       cell.appendChild(img);
-      cell.appendChild(el('span', 'nm', ic.name));
+      const nm = el('span', 'nm', ic.name);
+      nm.title = '点击改名';
+      nm.addEventListener('click', () => startRename(cell, ic));
+      cell.appendChild(nm);
       if (ic.used) cell.appendChild(el('span', 'used', '被 ' + ic.used + ' 张卡片使用'));
+      else cell.appendChild(el('span', 'used empty', '未使用'));
       const ops = el('div', 'ops');
       const copy = el('button', 'icon-btn', '⧉');
       copy.type = 'button';
@@ -441,6 +445,47 @@
       cell.appendChild(ops);
       grid.appendChild(cell);
     });
+  }
+
+  /* 行内改名：点名字变输入框，Enter/失焦保存，Esc 放弃 */
+  function startRename(cell, ic) {
+    if (cell.querySelector('.rename')) return;
+    const nm = cell.querySelector('.nm');
+    if (!nm) return;
+    const inp = el('input', 'rename');
+    inp.type = 'text';
+    inp.value = ic.name;
+    inp.maxLength = 80;
+    nm.replaceWith(inp);
+    inp.focus();
+    inp.select();
+    let done = false;
+    const finish = async (save) => {
+      if (done) return;
+      done = true;
+      const v = inp.value.trim();
+      if (!save || !v || v === ic.name) {
+        // 没改动就原地还原，不触整表重渲染（免得滚动位置被重置）
+        const back = el('span', 'nm', ic.name);
+        back.title = '点击改名';
+        back.addEventListener('click', () => startRename(cell, ic));
+        inp.replaceWith(back);
+        return;
+      }
+      try {
+        await api('PATCH', '/api/admin/icons/' + ic.id, { name: v });
+        ic.name = v;
+        await load();
+      } catch (ex) {
+        alert(ex.message);
+        await load();
+      }
+    };
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    inp.addEventListener('blur', () => finish(true));
   }
 
   document.getElementById('icon-file').addEventListener('change', async (e) => {
