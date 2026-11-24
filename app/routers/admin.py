@@ -214,7 +214,13 @@ async def icon_from_url(request: Request):
     except upload_svc.UploadError as exc:
         return JSONResponse({"error": f"抓到了但用不了：{exc}"}, status_code=400)
     db.audit(user["id"], "icon.fetch", source, security.client_ip(request), "")
-    return {"ok": True, "icon": f"/i/{row['path']}", "source": source, "bytes": row["bytes"]}
+    return {
+        "ok": True,
+        "icon": f"/i/{row['path']}",
+        "source": source,
+        "bytes": row["bytes"],
+        "reused": bool(row.get("reused")),
+    }
 
 
 # ---------- 图标 ----------
@@ -228,7 +234,12 @@ async def upload_icon(request: Request, file: UploadFile = File(...)):
     except upload_svc.UploadError as exc:
         return JSONResponse({"error": str(exc)}, status_code=400)
     db.audit(user["id"], "icon.upload", meta["path"], security.client_ip(request), "")
-    return {"ok": True, "id": meta["id"], "url": f"/i/{meta['path']}"}
+    return {
+        "ok": True,
+        "id": meta["id"],
+        "url": f"/i/{meta['path']}",
+        "reused": bool(meta.get("reused")),
+    }
 
 
 @router.delete("/api/admin/icons/{icon_id}")

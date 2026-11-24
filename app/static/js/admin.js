@@ -304,7 +304,11 @@
         syncPreview();
         let host = '';
         try { host = new URL(r.source).host; } catch (e) { host = r.source; }
-        setIconStatus('已从 ' + host + ' 取到 ' + Math.round((r.bytes || 0) / 1024) + ' KB', 'ok');
+        if (r.reused) {
+          setIconStatus('图标库里已有这张，直接复用', 'ok');
+        } else {
+          setIconStatus('已从 ' + host + ' 取到 ' + Math.round((r.bytes || 0) / 1024) + ' KB', 'ok');
+        }
       } catch (ex) {
         setIconStatus(ex.message, 'bad');
       } finally {
@@ -409,6 +413,7 @@
       img.alt = ic.name;
       cell.appendChild(img);
       cell.appendChild(el('span', 'nm', ic.name));
+      if (ic.used) cell.appendChild(el('span', 'used', '被 ' + ic.used + ' 张卡片使用'));
       const ops = el('div', 'ops');
       const copy = el('button', 'icon-btn', '⧉');
       copy.type = 'button';
@@ -444,9 +449,10 @@
     const fd = new FormData();
     fd.append('file', file);
     try {
-      await api('POST', '/api/admin/icons', fd);
+      const r = await api('POST', '/api/admin/icons', fd);
       e.target.value = '';
       await load();
+      if (r && r.reused) alert('这张图标库里已经有了，直接复用，没有重复保存。');
     } catch (ex) {
       alert(ex.message);
     }

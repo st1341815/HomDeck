@@ -1,7 +1,7 @@
 """HomDeck 应用入口。
 
 设计约束（对应三条硬要求）：
-1. 安全可靠 —— 依赖只有 7 个、无任何出站网络请求、SQL 全部手写可审计；
+1. 安全可靠 —— 依赖只有 7 个、出站请求只有「管理员手动抓图标」这一处、SQL 全部手写可审计；
 2. 功能不受限 —— 无授权、无账号上限、无付费墙；
 3. 随时加需求 —— 路由/模板/静态资源三层分明，加一个页面 = 加一个 router + 一个模板。
 """
@@ -26,6 +26,17 @@ log = logging.getLogger("homedeck")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    try:
+        from .services import uploads
+
+        result = uploads.dedupe_icons()
+        if result["merged"] or result["backfilled"]:
+            log.info(
+                "图标去重：合并 %d 条重复、回填 %d 条 sha",
+                result["merged"], result["backfilled"],
+            )
+    except Exception:  # 去重失败不该挡住启动
+        log.exception("图标去重失败，已跳过")
     log.info("HomDeck %s 启动，数据目录 %s", config.VERSION, config.DATA_DIR)
     yield
     db.close()

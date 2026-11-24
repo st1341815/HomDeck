@@ -44,11 +44,30 @@ def close() -> None:
 def init_db() -> None:
     conn = connect()
     conn.executescript(config.SCHEMA_PATH.read_text(encoding="utf-8"))
+    _migrate(conn)
     conn.execute(
-        "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')"
+        "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '2')"
     )
     _seed_admin(conn)
     _seed_settings(conn)
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """给老库补列。新库走 schema.sql 就有，这里只处理已经存在的旧表。
+
+    写成幂等的（先查 PRAGMA 再 ALTER），重启多少次都安全。
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(icon)")}
+    if "sha" not in cols:
+        conn.execute("ALTER TABLE icon ADD COLUMN sha TEXT")
+        conn.commit()
+        print("[HomDeck] 迁移：icon 表新增 sha 列（图标内容去重）", flush=True)
+    # 索引必须在 sha 列存在之后建：老库的表是 IF NOT EXISTS 跳过去的，
+    # 把这个语句放进 schema.sql 会在 ALTER 之前执行而报 no such column
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS ux_icon_sha ON icon(sha) WHERE sha IS NOT NULL"
+    )
+    conn.commit()
 
 
 def _seed_admin(conn: sqlite3.Connection) -> None:

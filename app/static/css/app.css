@@ -1216,6 +1216,11 @@ mark {
   text-overflow: ellipsis;
   max-width: 100%;
 }
+.icon-cell .used {
+  font: 400 10px/1.3 var(--mono);
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
 .icon-cell .ops { display: flex; gap: 4px; }
 
 .tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-2); }

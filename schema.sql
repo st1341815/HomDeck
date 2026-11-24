@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS icon (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   name       TEXT NOT NULL,
   path       TEXT NOT NULL UNIQUE,
+  sha        TEXT,                 -- 转码后 webp 的 sha256，用于内容去重
   mime       TEXT NOT NULL,
   bytes      INTEGER NOT NULL,
   created_at TEXT NOT NULL
