@@ -1,11 +1,12 @@
 """公开面板：内网免登录可看，可选要求登录。"""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from .. import db, security
 from ..rendering import render
+from ..services import visits
 
 router = APIRouter()
 
@@ -72,3 +73,24 @@ def panel_api(request: Request):
     if not user and db.get_setting("require_login", "0") == "1":
         return JSONResponse({"error": "请先登录"}, status_code=401)
     return build_panel(security.client_ip(request))
+
+
+@router.post("/api/visit")
+async def record_visit(request: Request):
+    """卡片被打开时前端 sendBeacon 过来的一条记录。
+
+    公开端点（面板本身可以免登录），所以不校验 CSRF、不要求登录。
+    代价是别人可以伪造点击刷统计——只影响自己看的数字，不做过度防御；
+    但价格必须低：不存在的 id 静默丢弃，限流宽松到不会咬到正常用户。
+    """
+    ip = security.client_ip(request)
+    security.rate_limit(f"visit:{ip}", 240)
+    try:
+        body = await request.json()
+        item_id = int(body.get("id") or 0)
+    except (ValueError, TypeError, AttributeError):
+        return JSONResponse({"ok": False}, status_code=204)
+    if item_id > 0:
+        visits.record(item_id, ip, request.headers.get("user-agent", ""))
+    # 204：sendBeacon 不读响应体，少传字节
+    return Response(status_code=204)

@@ -55,7 +55,7 @@
       <div class="grid">
         {% for it in g['items'] %}
         <a class="card" href="{{ it.url }}" target="{{ it.target }}" rel="noopener noreferrer"
-           data-name="{{ it.name }}" data-desc="{{ it.description }}"
+           data-id="{{ it.id }}" data-name="{{ it.name }}" data-desc="{{ it.description }}"
            title="{{ it.name }}{% if it.description %} · {{ it.description }}{% endif %}">
           <span class="card-icon{% if not it.icon %} is-text{% endif %}">
             {% if it.icon.startswith('/') %}

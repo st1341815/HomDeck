@@ -10,7 +10,7 @@ ICON_DIR = DATA_DIR / "icons"
 DB_PATH = DATA_DIR / "app.db"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
-VERSION = "0.8.3"
+VERSION = "0.9.0"
 
 # 会话签名密钥：优先环境变量，其次持久化到 data/secret.key
 SECRET_KEY = os.environ.get("HOMEDECK_SECRET", "")
@@ -35,6 +35,14 @@ ALLOWED_IMAGE_FORMATS = {"PNG", "JPEG", "WEBP", "GIF", "ICO"}
 # 限流
 LOGIN_LIMIT_PER_MIN = 5
 WRITE_LIMIT_PER_MIN = 60
+
+# 访问统计
+# day 字段按「UTC + 该偏移」算本地日期，这样按天聚合不依赖容器时区
+# （python:slim 里没有 tzdata，zoneinfo 不可靠，用固定偏移最稳）
+TZ_OFFSET_HOURS = float(os.environ.get("HOMEDECK_TZ_OFFSET", "8"))
+VISIT_KEEP_DAYS = int(os.environ.get("HOMEDECK_VISIT_KEEP_DAYS", "400"))
+# 同一 IP 连续点同一张卡片，N 秒内只算一次（双击 / 刷新回退不算新打开）
+VISIT_DEBOUNCE_SEC = float(os.environ.get("HOMEDECK_VISIT_DEBOUNCE", "3"))
 
 
 def load_secret() -> str:

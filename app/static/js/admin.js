@@ -685,6 +685,115 @@
     clearMarks();
   });
 
+  /* ---------- 访问统计 ---------- */
+
+  const visitDays = 14;
+
+  function fmtDT(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    const p = (n) => String(n).padStart(2, '0');
+    return p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  async function loadVisits() {
+    let d;
+    try {
+      d = await api('GET', '/api/admin/visits?days=' + visitDays);
+    } catch (ex) {
+      alert(ex.message);
+      return;
+    }
+    renderVisits(d);
+  }
+
+  function renderVisits(d) {
+    const k = d.kpi;
+
+    /* KPI */
+    const box = document.getElementById('visit-kpis');
+    box.innerHTML = '';
+    [
+      ['总打开', k.total, '累计'],
+      ['今日', k.today, d.range.end],
+      ['近 7 天', k.week, '含今日'],
+      ['独立访客', k.uniq_total, '近 7 天 ' + k.uniq_week + ' 个'],
+      ['内网 / 外网', d.net.lan + ' / ' + d.net.wan, '近 7 天打开次数'],
+      ['从未打开', k.never, '共 ' + k.items + ' 张卡片']
+    ].forEach((row) => {
+      const c = el('div', 'kpi');
+      c.appendChild(el('span', 'kpi-label', row[0]));
+      c.appendChild(el('strong', 'kpi-value', String(row[1])));
+      c.appendChild(el('span', 'kpi-sub', row[2]));
+      box.appendChild(c);
+    });
+
+    document.getElementById('visit-range-hint').textContent =
+      '趋势区间 ' + d.range.start + ' ~ ' + d.range.end +
+      ' · 记录保留 ' + d.keep_days + ' 天';
+
+    /* 每日柱状 */
+    const chart = document.getElementById('visit-chart');
+    chart.innerHTML = '';
+    const max = Math.max(1, ...d.trend.map((x) => x.n));
+    d.trend.forEach((x) => {
+      const col = el('div', 'vbar');
+      col.title = x.day + ' · ' + x.n + ' 次';
+      col.appendChild(el('span', 'vbar-n', x.n ? String(x.n) : '·'));
+      const fill = el('div', 'vbar-fill');
+      fill.style.height = Math.round((x.n / max) * 100) + '%';
+      if (!x.n) fill.classList.add('zero');
+      col.appendChild(fill);
+      col.appendChild(el('span', 'vbar-day', x.day.slice(5)));
+      chart.appendChild(col);
+    });
+
+    /* 卡片排行（含 0 次） */
+    const rank = document.querySelector('#visit-rank tbody');
+    rank.innerHTML = '';
+    d.rank.forEach((r, i) => {
+      const tr = el('tr');
+      if (!r.n) tr.classList.add('is-zero');
+      tr.appendChild(el('td', 'num', String(i + 1)));
+      tr.appendChild(el('td', '', r.name));
+      tr.appendChild(el('td', '', r.group || '—'));
+      tr.appendChild(el('td', 'num', String(r.n)));
+      tr.appendChild(el('td', '', r.last ? fmtDT(r.last) : '—'));
+      rank.appendChild(tr);
+    });
+    if (!d.rank.length) {
+      const tr = el('tr');
+      const td = el('td', 'dim', '还没有卡片');
+      td.colSpan = 5;
+      tr.appendChild(td);
+      rank.appendChild(tr);
+    }
+
+    /* 最近打开明细 */
+    const log = document.querySelector('#visit-log tbody');
+    log.innerHTML = '';
+    d.recent.forEach((r) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', '', fmtDT(r.at)));
+      tr.appendChild(el('td', '', r.name || r.group || '（已删除）'));
+      tr.appendChild(el('td', '', r.net === 'lan' ? '内网' : r.net === 'wan' ? '外网' : '—'));
+      tr.appendChild(el('td', 'mono-dim', r.ip));
+      const ua = el('td', 'dim-ua', r.ua);
+      if (r.ua_raw) ua.title = r.ua_raw;
+      tr.appendChild(ua);
+      log.appendChild(tr);
+    });
+    if (!d.recent.length) {
+      const tr = el('tr');
+      const td = el('td', 'dim', '还没有访问记录。打开首页点一张卡片就会出现在这里。');
+      td.colSpan = 5;
+      tr.appendChild(td);
+      log.appendChild(tr);
+    }
+  }
+
   /* ---------- 退出 ---------- */
 
   document.getElementById('btn-logout').addEventListener('click', async () => {
@@ -701,6 +810,8 @@
     document.querySelectorAll('.pane').forEach((p) => {
       p.classList.toggle('active', p.id === 'pane-' + btn.dataset.tab);
     });
+    // 统计每次进来都重算——数字会变，缓存没意义
+    if (btn.dataset.tab === 'visits') loadVisits();
   });
 
   load().catch((ex) => {

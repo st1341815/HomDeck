@@ -14,6 +14,7 @@ from ..rendering import render
 from ..services import backup as backup_svc
 from ..services import favicon as favicon_svc
 from ..services import uploads as upload_svc
+from ..services import visits
 
 router = APIRouter()
 
@@ -52,6 +53,15 @@ def overview(request: Request):
         "settings": {r["key"]: r["value"] for r in db.all_rows("SELECT * FROM setting")},
         "audit": [dict(r) for r in db.all_rows("SELECT * FROM audit ORDER BY id DESC LIMIT 50")],
     }
+
+
+# ---------- 访问统计 ----------
+
+@router.get("/api/admin/visits")
+def visit_stats(request: Request, days: int = 14):
+    security.require_admin(request)
+    days = max(1, min(days, 90))
+    return visits.overview(days)
 
 
 # ---------- 分组 ----------

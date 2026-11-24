@@ -18,6 +18,7 @@
   <button class="tab active" data-tab="cards" type="button">分组与卡片</button>
   <button class="tab" data-tab="settings" type="button">站点设置</button>
   <button class="tab" data-tab="icons" type="button">图标库</button>
+  <button class="tab" data-tab="visits" type="button">访问统计</button>
   <button class="tab" data-tab="backup" type="button">备份恢复</button>
   <button class="tab" data-tab="audit" type="button">操作日志</button>
 </nav>
@@ -96,6 +97,36 @@
       <p class="hint">会先把当前数据库另存为 <code>app.db.bak.时间戳</code> 再替换；恢复后建议重启容器。</p>
       <input type="file" id="restore-file" accept=".zip">
       <button class="btn danger" id="btn-restore" type="button">确认恢复</button>
+    </div>
+  </section>
+
+  <section class="pane" id="pane-visits">
+    <div class="side-head">
+      <h2>访问统计</h2>
+      <span class="dim" id="visit-range-hint"></span>
+    </div>
+    <div class="kpi-row" id="visit-kpis"></div>
+
+    <div class="card-box wide">
+      <h3>每日打开次数</h3>
+      <div class="vchart" id="visit-chart"></div>
+    </div>
+
+    <div class="card-box wide">
+      <h3>卡片排行</h3>
+      <p class="hint">按区间内打开次数排序；<b>0 次</b>的卡片排在后面——这是清理面板的直接线索。</p>
+      <table class="tbl" id="visit-rank">
+        <thead><tr><th>#</th><th>卡片</th><th>分组</th><th class="num">打开</th><th>最近一次</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card-box wide">
+      <h3>最近打开</h3>
+      <table class="tbl" id="visit-log">
+        <thead><tr><th>时间</th><th>卡片</th><th>网络</th><th>访客指纹</th><th>设备</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 

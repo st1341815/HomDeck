@@ -37,6 +37,14 @@ async def lifespan(app: FastAPI):
             )
     except Exception:  # 去重失败不该挡住启动
         log.exception("图标去重失败，已跳过")
+    try:
+        from .services import visits
+
+        dropped = visits.prune()
+        if dropped:
+            log.info("访问统计：清理 %d 条超过 %d 天的记录", dropped, config.VISIT_KEEP_DAYS)
+    except Exception:  # 清理同理
+        log.exception("访问统计清理失败，已跳过")
     log.info("HomDeck %s 启动，数据目录 %s", config.VERSION, config.DATA_DIR)
     yield
     db.close()

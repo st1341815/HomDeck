@@ -288,6 +288,43 @@
     });
   }
 
+  /* ---------- 访问统计埋点 ----------
+     卡片是普通 <a href>，跳转交给浏览器；这里只旁听，绝不 preventDefault，
+     否则新标签打开、中键、键盘 Enter 全会被破坏。
+     sendBeacon 是唯一能在「页面已经在卸载」时稳稳发出去的通道；
+     fetch+keepalive 只作老浏览器兜底。 */
+
+  function trackOpen(card) {
+    const id = Number(card.dataset.id);
+    if (!id) return;
+    const payload = JSON.stringify({ id: id });
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/visit', new Blob([payload], { type: 'application/json' }));
+        return;
+      }
+    } catch (e) {
+      /* 落到 fetch */
+    }
+    fetch('/api/visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      keepalive: true
+    }).catch(() => {});
+  }
+
+  document.addEventListener('click', (e) => {
+    const card = e.target && e.target.closest ? e.target.closest('.card') : null;
+    if (card) trackOpen(card);
+  });
+
+  document.addEventListener('auxclick', (e) => {
+    if (e.button !== 1) return; // 只统计中键新标签；右键菜单不算打开
+    const card = e.target && e.target.closest ? e.target.closest('.card') : null;
+    if (card) trackOpen(card);
+  });
+
   /* ---------- 头部时钟（参考 Sun-Panel 的首页时钟） ---------- */
 
   let clockTimer = 0;

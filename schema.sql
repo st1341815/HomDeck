@@ -67,3 +67,22 @@ CREATE TABLE IF NOT EXISTS meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- 访问统计：谁在什么时候打开了哪张卡片。
+-- 卡片名与分组名冗余存一份：卡片被删掉之后，历史记录还能看懂是什么。
+-- day 是「本地日期」（UTC + HOMEDECK_TZ_OFFSET），按天聚合直接 GROUP BY，
+-- 不依赖容器时区，也不用在 SQL 里做时区运算。
+CREATE TABLE IF NOT EXISTS visit (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_id    INTEGER,
+  item_name  TEXT NOT NULL DEFAULT '',
+  group_name TEXT NOT NULL DEFAULT '',
+  ip_hash    TEXT NOT NULL DEFAULT '',
+  net        TEXT NOT NULL DEFAULT '',
+  ua         TEXT NOT NULL DEFAULT '',
+  day        TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_visit_created ON visit(created_at DESC);
+CREATE INDEX IF NOT EXISTS ix_visit_day ON visit(day);
+CREATE INDEX IF NOT EXISTS ix_visit_item ON visit(item_id);
